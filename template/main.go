@@ -29,21 +29,14 @@ func main() {
 	sc.Scan()
 	n := atoi(sc.Text())
 
-	// main
-	var ok bool
-
-	// output
-	if debug == 0 {
-		if ok {
-			fmt.Println("Yes")
-		} else {
-			fmt.Println("No")
-		}
-	}
 }
 
 func abs(v int) int {
 	return int(math.Abs(float64(v)))
+}
+
+func pow(a, b int) int {
+	return int(math.Pow(float64(a), float64(b)))
 }
 
 func max(values ...int) int {
@@ -291,6 +284,79 @@ func (q *pQueue) len() int {
 
 func (q *pQueue) empty() bool {
 	return len(q.data) == 0
+}
+
+type segmentTree struct {
+	data   []int
+	size   int
+	eval   func(a, b int) int
+	bottom int
+}
+
+func newSegmentTree(requiredSize int, bottom int, eval func(a, b int) int) *segmentTree {
+	size := 1
+	for size < requiredSize {
+		size *= 2
+	}
+	return &segmentTree{
+		data:   make([]int, size*2),
+		size:   size,
+		eval:   eval,
+		bottom: bottom,
+	}
+}
+
+func (s *segmentTree) update(pos, val int) {
+	p := s.size + pos - 1
+	s.data[p] = val
+	for p > 1 {
+		p /= 2
+		s.data[p] = s.eval(s.data[p*2], s.data[p*2+1])
+	}
+}
+
+func (s *segmentTree) query(l, r int) int {
+	// 半開区間なので、 [1, size+1)
+	return s._query(l, r, 1, s.size+1, 1)
+}
+
+func (s *segmentTree) _query(l, r, curL, curR, curN int) int {
+	// 半開区間なので、端点が一致しても積は空集合
+	if r <= curL || curR <= l {
+		return s.bottom
+	}
+	if l <= curL && curR <= r {
+		return s.data[curN]
+	}
+	m := (curL + curR) / 2
+	ansL := s._query(l, r, curL, m, curN*2)
+	ansR := s._query(l, r, m, curR, curN*2+1)
+	return s.eval(ansL, ansR)
+}
+
+func (s *segmentTree) showDebug() {
+	if debug == 0 {
+		return
+	}
+	fmt.Printf("---")
+	ypos := 0
+	for i := 1; i <= s.size*2-1; i++ {
+		if i >= pow(2, ypos) {
+			ypos++
+			fmt.Printf("\n%d: ", ypos)
+		}
+		fmt.Printf("%d ", s.data[i])
+	}
+	fmt.Println()
+	fmt.Println("---")
+}
+
+func makeMatrix(n, m int) [][]int {
+	matrix := make([][]int, n+1)
+	for i := 1; i <= n; i++ {
+		matrix[i] = make([]int, m+1)
+	}
+	return matrix
 }
 
 func fillSlice(s []int, v int) {
