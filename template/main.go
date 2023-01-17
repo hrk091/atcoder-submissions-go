@@ -298,8 +298,14 @@ func newSegmentTree(requiredSize int, bottom int, eval func(a, b int) int) *segm
 	for size < requiredSize {
 		size *= 2
 	}
+	data := make([]int, size*2)
+	if bottom != 0 {
+		for i, _ := range data {
+			data[i] = bottom
+		}
+	}
 	return &segmentTree{
-		data:   make([]int, size*2),
+		data:   data,
 		size:   size,
 		eval:   eval,
 		bottom: bottom,
