@@ -24,14 +24,15 @@ func init() {
 	}
 }
 
-type part struct {
-	start int
-	end   int
-}
-
-func (p part) len() int {
-	return p.end - p.start
-}
+// structにすると、copyのコストが高くて間に合わない。配列2つの方が速い
+//type part struct {
+//	start int
+//	end   int
+//}
+//
+//func (p part) len() int {
+//	return p.end - p.start
+//}
 
 func main() {
 	// input
@@ -40,11 +41,10 @@ func main() {
 	sc.Scan()
 	q := atoi(sc.Text())
 
-	ar := make([]part, q+1)
-	ar[0] = part{
-		start: 0,
-		end:   l,
-	}
+	sar := make([]int, q+1)
+	ear := make([]int, q+1)
+	sar[0] = 0
+	ear[0] = l
 	count := 1
 	for i := 1; i <= q; i++ {
 		sc.Scan()
@@ -53,40 +53,42 @@ func main() {
 		x := atoi(sc.Text())
 		if c == 1 {
 			pos := binarySearch(0, count, func(m int) int {
-				if ar[m].start < x && x < ar[m].end {
+				if sar[m] < x && x < ear[m] {
 					return 0
 				}
-				if x <= ar[m].start {
+				if x <= sar[m] {
 					return -1
 				}
 				return 1
 			})
-			copy(ar[pos+1:count+1], ar[pos:count])
-			ar[pos].end = x
-			ar[pos+1].start = x
+			copy(sar[pos+1:count+1], sar[pos:count])
+			copy(ear[pos+1:count+1], ear[pos:count])
+			ear[pos] = x
+			sar[pos+1] = x
 			count++
 			if debug > 0 {
-				fmt.Printf("ar: %+v\n", ar)
+				fmt.Printf("start ar: %+v\n", sar)
+				fmt.Printf("end ar: %+v\n", ear)
 			}
 		}
 		if c == 2 {
 			if count == 1 {
-				fmt.Println(ar[0].len())
+				fmt.Println(ear[0] - sar[0])
 				continue
 			}
 			ans := binarySearch(0, count, func(m int) int {
 				if debug > 0 {
 					fmt.Printf("m: %+v\n", m)
 				}
-				if ar[m].start < x && x < ar[m].end {
+				if sar[m] < x && x < ear[m] {
 					return 0
 				}
-				if x <= ar[m].start {
+				if x <= sar[m] {
 					return -1
 				}
 				return 1
 			})
-			fmt.Println(ar[ans].len())
+			fmt.Println(ear[ans] - sar[ans])
 		}
 	}
 }
