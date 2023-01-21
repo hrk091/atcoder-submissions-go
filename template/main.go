@@ -189,6 +189,8 @@ func (g *graph) wfs(pos int, visited []bool, fn func(curr, next int)) (bool, []b
 			if !visited[next] {
 				q.push(next)
 			}
+			// if multiple adding to queue is needed, disable following
+			visited[next] = true
 		}
 	}
 
@@ -359,7 +361,7 @@ func (s *segmentTree) showDebug() {
 
 func makeMatrix(n, m int) [][]int {
 	matrix := make([][]int, n+1)
-	for i := 1; i <= n; i++ {
+	for i := 0; i <= n; i++ {
 		matrix[i] = make([]int, m+1)
 	}
 	return matrix
