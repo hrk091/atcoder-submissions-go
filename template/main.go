@@ -258,6 +258,16 @@ func (q *pQueue) pop() int {
 	q.data[0] = q.data[last]
 	q.data = q.data[0:last]
 
+	if last == 1 {
+		return val
+	}
+	if last == 2 {
+		if q.compare(q.data[1], q.data[0]) {
+			q.data[0], q.data[1] = q.data[1], q.data[0]
+		}
+		return val
+	}
+
 	cur := 0
 	for {
 		l, r := cur*2+1, cur*2+2
