@@ -31,6 +31,9 @@ func main() {
 
 }
 
+// ---------------------
+// Math
+
 func abs(v int) int {
 	return int(math.Abs(float64(v)))
 }
@@ -67,34 +70,8 @@ func sum(values ...int) int {
 	return a
 }
 
-func bitToList(b int, len int) ([]int, int) {
-	// 63, 8 => [1,1,1,1,1,1,0,0]
-	var ret []int
-	count := 0
-	for i := 0; i < len; i++ {
-		v := b >> i & 1
-		if v == 1 {
-			count++
-		}
-		ret = append(ret, v)
-	}
-	return ret, count
-}
-
-func binarySearch(l, r int, fn func(int) int) int {
-	// fn must be the one that returns true only when the result is greater than the given value.
-	for l < r {
-		mid := (l + r) / 2
-		if ret := fn(mid); ret > 0 {
-			l = mid + 1
-		} else if ret < 0 {
-			r = mid
-		} else {
-			return mid
-		}
-	}
-	return l
-}
+// ---------------------
+// Graph
 
 type graph struct {
 	nodeSize int
@@ -141,37 +118,33 @@ func (g *graph) isCompleted(visited []bool) bool {
 }
 
 // dfs conducts DFS and returns whether all nodes are visited or not and visited list.
-func (g *graph) dfs(pos int, visited []bool, fn func(curr, next int)) (bool, []bool) {
-	if visited == nil {
-		visited = g.newVisited()
-	}
+func (g *graph) dfs(pos int, visited []bool, fn func(curr, next int)) {
 
-	var dfs func(int)
-	dfs = func(curr int) {
+	var dfs func(int, int)
+	dfs = func(prev, curr int) {
 		visited[curr] = true
 
 		for _, next := range g.data[curr] {
+			if next == prev {
+				// skip going back
+				continue
+			}
 			if fn != nil {
 				fn(curr, next)
 			}
 			if !visited[next] {
-				dfs(next)
+				dfs(curr, next)
 			}
 		}
 		// if revisit is needed, enable following
 		//visited[curr] = false
 	}
 	if !visited[pos] {
-		dfs(pos)
+		dfs(0, pos)
 	}
-
-	return g.isCompleted(visited), visited
 }
 
-func (g *graph) wfs(pos int, visited []bool, fn func(curr, next int)) (bool, []bool) {
-	if visited == nil {
-		visited = g.newVisited()
-	}
+func (g *graph) wfs(pos int, visited []bool, fn func(curr, next int)) {
 
 	q := newQueue()
 	if !visited[pos] {
@@ -193,9 +166,10 @@ func (g *graph) wfs(pos int, visited []bool, fn func(curr, next int)) (bool, []b
 			visited[next] = true
 		}
 	}
-
-	return g.isCompleted(visited), visited
 }
+
+// ---------------------
+// Queue
 
 type queue struct {
 	data []int
@@ -298,6 +272,9 @@ func (q *pQueue) empty() bool {
 	return len(q.data) == 0
 }
 
+// ---------------------
+// Segment Tree
+
 type segmentTree struct {
 	data   []int
 	size   int
@@ -369,6 +346,184 @@ func (s *segmentTree) showDebug() {
 	fmt.Println("---")
 }
 
+// ---------------------
+// LinkedList & OrderedMap
+
+type linkedListNode struct {
+	next *linkedListNode
+	prev *linkedListNode
+
+	key   int
+	value interface{}
+}
+
+type linkedList struct {
+	head *linkedListNode
+	tail *linkedListNode
+	len  int
+}
+
+func newLinkedList() *linkedList {
+	list := &linkedList{
+		head: &linkedListNode{value: nil},
+		tail: &linkedListNode{value: nil},
+	}
+	list.head.next = list.tail
+	list.tail.prev = list.head
+	return list
+}
+
+func (l *linkedList) append(key int, value interface{}) *linkedListNode {
+	n := &linkedListNode{
+		prev:  l.tail.prev,
+		next:  l.tail,
+		key:   key,
+		value: value,
+	}
+
+	l.tail.prev.next = n
+	l.tail.prev = n
+	l.len++
+
+	return n
+}
+
+func (l *linkedList) remove(n *linkedListNode) bool {
+	if n == l.head || n == l.tail {
+		return false
+	}
+
+	n.prev.next = n.next
+	n.next.prev = n.prev
+	l.len--
+
+	return true
+}
+
+func (l *linkedList) Iterate() chan *linkedListNode {
+	ch := make(chan *linkedListNode)
+
+	go func() {
+		n := l.head
+
+		for n.next != l.tail {
+			ch <- n.next
+			n = n.next
+		}
+
+		close(ch)
+	}()
+
+	return ch
+}
+
+type orderedDict struct {
+	lookup map[int]*linkedListNode
+	list   *linkedList
+}
+
+func newOrderedDict() *orderedDict {
+	return &orderedDict{
+		lookup: make(map[int]*linkedListNode),
+		list:   newLinkedList(),
+	}
+}
+
+func (d *orderedDict) set(key int, value interface{}) {
+	if n, ok := d.lookup[key]; ok {
+		d.list.remove(n)
+	}
+
+	d.lookup[key] = d.list.append(key, value)
+}
+
+func (d *orderedDict) get(key int) interface{} {
+	if v, ok := d.lookup[key]; ok {
+		return v.value
+	} else {
+		return -1
+	}
+}
+
+func (d *orderedDict) remove(key int) bool {
+	if n, ok := d.lookup[key]; ok {
+		if ok := d.list.remove(n); !ok {
+			return false
+		}
+		delete(d.lookup, key)
+		return true
+	}
+	return false
+}
+
+func (d *orderedDict) removeLast() bool {
+	n := d.list.head.next
+	if ok := d.list.remove(n); !ok {
+		return false
+	}
+	delete(d.lookup, n.key)
+	return true
+}
+
+func (d *orderedDict) moveToTop(key int) bool {
+	if n, ok := d.lookup[key]; ok {
+		d.list.remove(n)
+		d.lookup[key] = d.list.append(n.key, n.value)
+		return true
+	}
+	return false
+}
+
+func (d *orderedDict) len() int {
+	return d.list.len
+}
+
+func (d *orderedDict) iterate() chan interface{} {
+	ch := make(chan interface{})
+
+	go func() {
+		for v := range d.list.Iterate() {
+			ch <- v.value
+		}
+
+		close(ch)
+	}()
+
+	return ch
+}
+
+// ---------------------
+// Util
+
+func bitToList(b int, len int) ([]int, int) {
+	// 63, 8 => [1,1,1,1,1,1,0,0]
+	var ret []int
+	count := 0
+	for i := 0; i < len; i++ {
+		v := b >> i & 1
+		if v == 1 {
+			count++
+		}
+		ret = append(ret, v)
+	}
+	return ret, count
+}
+
+func binarySearch(l, r int, fn func(int) int) int {
+	// fn must be the one that returns true only when the result is greater than the given value.
+	for l < r {
+		mid := (l + r) / 2
+		if ret := fn(mid); ret > 0 {
+			l = mid + 1
+		} else if ret < 0 {
+			r = mid
+		} else {
+			return mid
+		}
+	}
+	return l
+}
+
 func makeMatrix(n, m int) [][]int {
 	matrix := make([][]int, n+1)
 	for i := 0; i <= n; i++ {
@@ -390,6 +545,7 @@ func fillMatrix(s [][]int, v int) {
 		copy(s[p], s[0])
 	}
 }
+
 func scanLineInt(sc *bufio.Scanner, size, offset int) []int {
 	items := make([]int, size+offset)
 	for i := 0; i < size; i++ {
