@@ -27,7 +27,7 @@ func init() {
 func main() {
 	// input
 	sc.Scan()
-	n := atoi(sc.Text())
+	_ = atoi(sc.Text())
 
 }
 
@@ -140,7 +140,7 @@ func (g *graph) dfs(pos int, visited []bool, fn func(curr, next int)) {
 		//visited[curr] = false
 	}
 	if !visited[pos] {
-		dfs(0, pos)
+		dfs(-1, pos)
 	}
 }
 
@@ -166,6 +166,45 @@ func (g *graph) wfs(pos int, visited []bool, fn func(curr, next int)) {
 			visited[next] = true
 		}
 	}
+}
+
+// ---------------------
+// Union Find
+
+type unionFind struct {
+	parents []int
+	sizes   []int
+}
+
+func newUnionFind(numNodes int) *unionFind {
+	parents := make([]int, numNodes)
+	fillSlice(parents, -1)
+	sizes := make([]int, numNodes)
+	fillSlice(sizes, 1)
+	return &unionFind{parents, sizes}
+}
+
+func (uf *unionFind) root(v int) int {
+	for uf.parents[v] != -1 {
+		v = uf.parents[v]
+	}
+	return v
+}
+
+func (uf *unionFind) unite(u, v int) {
+	rootU := uf.root(u)
+	rootV := uf.root(v)
+	if rootU == rootV {
+		return
+	}
+	if uf.sizes[rootU] < uf.sizes[rootV] {
+		uf.parents[rootU] = rootV
+		uf.sizes[rootV] = uf.sizes[rootU] + uf.sizes[rootV]
+	}
+}
+
+func (uf *unionFind) isSameGroup(u, v int) bool {
+	return uf.root(u) == uf.root(v)
 }
 
 // ---------------------
