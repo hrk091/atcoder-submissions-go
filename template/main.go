@@ -137,7 +137,7 @@ func (g *graph) dfs(pos int, visited []bool, fn func(curr, next int)) {
 			}
 		}
 		// if revisit is needed, enable following
-		//visited[curr] = false
+		// visited[curr] = false
 	}
 	if !visited[pos] {
 		dfs(-1, pos)
@@ -146,7 +146,7 @@ func (g *graph) dfs(pos int, visited []bool, fn func(curr, next int)) {
 
 func (g *graph) wfs(pos int, visited []bool, fn func(curr, next int)) {
 
-	q := newQueue()
+	q := newStack()
 	if !visited[pos] {
 		q.push(pos)
 	}
@@ -209,6 +209,32 @@ func (uf *unionFind) isSameGroup(u, v int) bool {
 
 // ---------------------
 // Queue
+
+type stack struct {
+	data []int
+}
+
+func newStack() *stack {
+	return &stack{}
+}
+
+func (q *stack) push(v int) {
+	q.data = append(q.data, v)
+}
+
+func (q *stack) pop() int {
+	v := q.data[q.len()-1]
+	q.data = q.data[:q.len()-1]
+	return v
+}
+
+func (q *stack) len() int {
+	return len(q.data)
+}
+
+func (q *stack) empty() bool {
+	return len(q.data) == 0
+}
 
 type queue struct {
 	data []int
