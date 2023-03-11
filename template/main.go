@@ -200,6 +200,9 @@ func (uf *unionFind) unite(u, v int) {
 	if uf.sizes[rootU] < uf.sizes[rootV] {
 		uf.parents[rootU] = rootV
 		uf.sizes[rootV] = uf.sizes[rootU] + uf.sizes[rootV]
+	} else {
+		uf.parents[rootV] = rootU
+		uf.sizes[rootU] = uf.sizes[rootU] + uf.sizes[rootV]
 	}
 }
 
